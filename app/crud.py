@@ -3,7 +3,7 @@ from fastapi import HTTPException
 from passlib.context import CryptContext
 from . import models, schemas
 
-pwd_context = CryptContext(schemes=["bycript"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def get_password_hash(password):
     return pwd_context.hash(password)
@@ -11,7 +11,7 @@ def get_password_hash(password):
 #USUARIOS
 #Creacion de usuarios
 def create_user(db: Session, user: schemas.UserCreate):
-    found = db.query(models.User).filter(models.User.email == user.email).first
+    found = db.query(models.User).filter(models.User.email == user.email).first()
     if found:
         raise HTTPException(status_code=400, detail="Email ya registrado")
     db_user = models.User(
@@ -23,15 +23,18 @@ def create_user(db: Session, user: schemas.UserCreate):
     db.commit()
     db.refresh(db_user)
     return db_user
+
 #Obtener todos los usuarios
 def get_users(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.User).offset(skip).limit(limit).all()
+
 #Obtener usuario por ID
 def get_user(db: Session, user_id: int):
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return user
+
 #Actualizar usuario
 def update_user(db: Session, user_id: int, user_in: schemas.UserUpdate):
     user = db.query(models.User).filter(models.User.id == user_id).first()
@@ -49,6 +52,7 @@ def update_user(db: Session, user_id: int, user_in: schemas.UserUpdate):
     db.commit()
     db.refresh(user)
     return user
+
 #Eliminar usuario
 def delete_user(db: Session, user_id: int):
     user = db.query(models.User).filter(models.User.id == user_id).first()
@@ -78,6 +82,7 @@ def create_task(db: Session, user_id: int, task_in: schemas.TaskCreate):
 #Obtener tareas, por usuario
 def get_tasks_by_user(db: Session, user_id: int, skip: int=0, limit: int=100):
     return db.query(models.Task).filter(models.Task.user_id == user_id).offset(skip).limit(limit).all()
+
 #Actualizar la tarea
 def update_task(db: Session, task_id: int, task_in: schemas.TaskUpdate):
     task = db.query(models.Task).filter(models.Task.id == task_id).first()
@@ -92,6 +97,7 @@ def update_task(db: Session, task_id: int, task_in: schemas.TaskUpdate):
     db.commit()
     db.refresh(task)
     return task
+
 #Eliminar tarea
 def delete_task(db: Session, task_id: int):
     task = db.query(models.Task).filter(models.Task.id == task_id).first()
@@ -99,5 +105,4 @@ def delete_task(db: Session, task_id: int):
         raise HTTPException(status_code=404, detail="Tarea no encontrada")
     db.delete(task)
     db.commit()
-    return {"ok", True}
-    
+    return {"ok": True}  
